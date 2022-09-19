@@ -6,7 +6,6 @@
  * Gerhard Bertelsmann
  * ----------------------------------------------------------------------------
  */
-
 /*
  * This file is derived from the libopencm3 project examples 
  */
@@ -261,6 +260,7 @@ static int slcan_command(void)
 	return ret;
 }
 
+
 int main(void)
 {
 	status = 0;
@@ -277,7 +277,7 @@ int main(void)
 	}
 	init_usart2(921600);
 	can_setup();
-
+	l2printf("float:%f\r\n", 0.11f );
 	/* endless loop */
 	int ct = 0;
 	while (1) {
