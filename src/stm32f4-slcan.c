@@ -44,10 +44,15 @@ static void gpio_setup(void)
  */
 volatile uint32_t system_millis;
 
+int ans;
 /* Called when systick fires */
 void sys_tick_handler(void)
 {
 	system_millis++;
+	volatile int i;
+	i = timer_get_counter(TIM3);
+	i++;
+	ans = i;
 }
 /* sleep for delay milliseconds */
 void wait1ms(uint32_t delay)
