@@ -66,6 +66,7 @@ uint8_t hex2bin(char *s);
 
 void init_buzzer(void);
 void pipo(void);
+void beep(int freq, int ms);
 
 
 
