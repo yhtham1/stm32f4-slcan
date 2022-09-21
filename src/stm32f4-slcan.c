@@ -263,21 +263,22 @@ static int slcan_command(void)
 
 int main(void)
 {
+	SCB_VTOR = 0x20000000;
 	status = 0;
 	commands_pending = 0;
 
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
 	gpio_setup();
 	systick_setup();
+	init_buzzer();
 	int i;
-	for( i = 0 ; i < 3 ; i++){
+	for( i = 0 ; i < 10 ; i++){
 		gpio_toggle( GPIOA, GPIO0 );
 		gpio_toggle( GPIOA, GPIO1 );
 		wait1ms(200);
 	}
 	init_usart2(921600);
 	can_setup();
-	l2printf("float:%f\r\n", 0.11f );
 	/* endless loop */
 	int ct = 0;
 	while (1) {

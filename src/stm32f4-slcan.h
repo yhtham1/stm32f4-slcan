@@ -10,6 +10,7 @@
 #ifndef _STM32_SLCAN_H_
 #define _STM32_SLCAN_H_
 
+#include <libopencm3/cm3/scb.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/stm32/can.h>
@@ -60,5 +61,18 @@ uint8_t uart_read_blocking(void);
 uint8_t nibble2bin(uint8_t s);
 void bin2hex(uint8_t *dst, unsigned char c);
 uint8_t hex2bin(char *s);
+
+
+void init_buzzer(void);
+void pipo(void);
+
+
+
+
+
+
+
+
+
 
 #endif  /* _STM32_SLCAN_H_ */
