@@ -10,6 +10,7 @@ PA1 = CAN-TX LED
 PA0 = CAN-RX LED
 としています。
 
+da
 
 開発環境
 microsoft Visual Studio Code
