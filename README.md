@@ -2,10 +2,10 @@
 
 for nucleo-F446RE
 
-nucleoF446REをwindows pythonからpython-canから使用できるデバイスにします。  
+nucleoF446REをwindows python上のpython-canから使用できるデバイスにします。  
 CAN1は使用せずクロック供給のみ、CAN2を使用します。  
 python-canでは  
-interface名をslcal, ttyBaudrate=921600  
+interface名をslcan, ttyBaudrate=921600  
 にします。
 mcp2562, TJ1050といったトランシーバICをPB8, PB9に接続します。  
 PA1 = CAN-TX LED  
