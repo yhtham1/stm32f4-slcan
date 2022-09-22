@@ -13,7 +13,6 @@
 #include "stm32f4-slcan.h"
 #include "usart.h"
 
-volatile uint8_t status;
 
 static void gpio_setup(void)
 {
@@ -24,9 +23,7 @@ static void gpio_setup(void)
 	/* PB8 & PB9 CAN */
 	rcc_periph_clock_enable(RCC_GPIOB);
 
-	/* Preconfigure LED */
 	gpio_clear(GPIOA, GPIO5); /* board  LED green off */
-	gpio_clear(GPIOA, GPIO0); /* can tx LED green off */
 
 	/* Configure LED&Osci GPIO */
 	gpio_mode_setup(GPIOA,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO0);//PA0 CANRX-LED
@@ -79,16 +76,12 @@ static void put_hex(uint8_t c)
 	putcSIO2(s[1]);
 }
 
-
-
 void can2_rx1_isr(void)
 {
 	uint32_t id;
 	bool ext, rtr;
 	uint8_t  dlc, data[8], fmi;
-	gpio_clear(GPIOA, GPIO0);
 	can_receive(CAN2, 1, false, &id, &ext, &rtr, &fmi, &dlc, data, NULL);
-	gpio_clear(GPIOA, GPIO0);
 	return;
 }
 
@@ -109,9 +102,6 @@ void can2_poll(void)
 	fmi = rx.fmi;
 	dlc = rx.dlc;
 	memcpy( data, rx.data, 8 );
-
-
-	// can_receive(CAN2, 0, false, &id, &ext, &rtr, &fmi, &dlc, data, NULL);
 
 	if (rtr) {
 		if (ext)
@@ -149,10 +139,6 @@ void can2_poll(void)
 		put_hex(data[i]);
 
 	putcSIO2('\r');
-	// can_fifo_release(CAN2, 0);
-
-	/* enable the transmitter now */
-	// USART_CR1(USART2) |= USART_CR1_TXEIE;
 }
 
 static uint32_t get_nibbles(int nibbles)
@@ -193,7 +179,7 @@ static int slcan_command(void)
 	}
 
 	d = getcSIO2();
-	if( -1 == d ) return 0;
+	if( -1 == d ) return 0;// empty SIO buffer
 	c = 0xff & d;
 	switch (c){
 	case 'T':
@@ -254,8 +240,17 @@ static int slcan_command(void)
 
 #if 1
 	if (send) {
-		gpio_toggle(GPIOA, GPIO1);//PA1 CANTX-LED 
-		ret = can_transmit(CAN2, id, ext, rtr, dlc, data);
+		CANMSG tx;
+		tx.id = id;
+		tx.ext = ext;
+		tx.rtr = rtr;
+		tx.dlc = dlc;
+		memcpy(tx.data, data, 8);
+		putcCAN2(tx);
+		ret = 0; // OK
+
+
+		// ret = can_transmit(CAN2, id, ext, rtr, dlc, data);
 		/* gpio_debug(ret); */
 	}
 #else
@@ -273,9 +268,9 @@ static int slcan_command(void)
 #endif
 
 	if(ret){
-		putcSIO2('\r');
+		putcSIO2('\r');//NG
 	} else {
-		putcSIO2('\a');
+		putcSIO2('\a');//OK
 	}
 	return ret;
 }
@@ -283,8 +278,7 @@ static int slcan_command(void)
 
 int main(void)
 {
-	SCB_VTOR = 0x20000000;
-	status = 0;
+	SCB_VTOR = 0x20000000;//Run from RAM for DEBUG
 
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
 	gpio_setup();

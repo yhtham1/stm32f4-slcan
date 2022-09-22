@@ -98,9 +98,7 @@ void intr_USART2_rx( void )
 	/* Check if we were called because of RXNE. */
 	if (((USART_SR(USARTDEV) & USART_SR_RXNE) != 0)) {
 		/* Retrieve the data from the peripheral. */
-		gpio_set(GPIOA, GPIO0);//RX LED PA0
 		_push_rx(usart_recv(USARTDEV));
-		gpio_clear(GPIOA, GPIO0);//RX LED PA0
 	}
 }
 //*********************************** 送信ハードウェア部分
@@ -135,7 +133,7 @@ void usart2_isr( void )
 
 void can2_poll(void);
 
-char getcSIO2b(void)
+char getcSIO2b(void) // bloking read
 {
 	int d;
 	while(-1 == (d = getcSIO2())){

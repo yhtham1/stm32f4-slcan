@@ -54,7 +54,10 @@ static CANMSG _pop_rx( void )
 {
 	CANMSG ans;
 	ans.dlc = 0xff; // 無効なデータを知らせる。
-	if( _RxRp == _RxWp ) return ans;				// empty data
+	if( _RxRp == _RxWp ){
+		gpio_clear(GPIOA, GPIO0); // PA0 CANRX-LED
+		return ans;				// empty data
+	}
 	ans = _RxBuf[ _RxRp ];
 	_RxRp = _incp_rx( _RxRp );
 	return ans;
@@ -80,7 +83,9 @@ static CANMSG _pop_tx( void )
 {
 	CANMSG ans;
 	ans.dlc = 0xff;
-	if( _TxRp == _TxWp ) return ans;				// empty data
+	if( _TxRp == _TxWp ){
+		return ans;				// empty data
+	}
 	ans = _TxBuf[ _TxRp ];
 	_TxRp = _incp_tx( _TxRp );
 	return ans;
@@ -98,7 +103,6 @@ void can2_rx0_isr(void)
 	gpio_set(GPIOA, GPIO0);	//PA0 RX-LED
 	can_receive(CAN2, 0, false, &rx.id, &rx.ext, &rx.rtr, &rx.fmi, &rx.dlc, rx.data, &rx.timestamp);
 	_push_rx( rx );
-	gpio_clear(GPIOA, GPIO0);//PA0 RX-LED
 	can_fifo_release(CANDEV, 0);
 	return;
 }
@@ -117,6 +121,7 @@ void can2_tx_isr( void )
 		a = _pop_tx();
 		if( 0xff == a.dlc ){
 			can_disable_irq(CANDEV, CAN_IER_TMEIE);
+			gpio_clear(GPIOA, GPIO1); //PA1 CANTX-LED
 			return;
 		}
 		can_transmit(CANDEV, a.id, a.ext, a.rtr, a.dlc, a.data );
@@ -138,6 +143,7 @@ void putcCAN2( CANMSG c )
 	ans = _push_tx( c );
 	if( ans < 0 ){lprintf("putcCAN2() overflow\r\n"); for(;;); }// putcCAN2 error
 #endif
+	gpio_set( GPIOA, GPIO1 ); //PA1 CANTX-LED
 	_push_tx( c );
 	can_enable_irq(CAN2, CAN_IER_TMEIE);
 	// CAN_ITConfig( CANDEV, CAN_IT_TME, ENABLE );	// 送信割込み許可
