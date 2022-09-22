@@ -14,7 +14,6 @@
 #include "usart.h"
 
 volatile uint8_t status;
-volatile uint8_t commands_pending;
 
 static void gpio_setup(void)
 {
@@ -178,6 +177,7 @@ static int slcan_command(void)
 	uint32_t id;
 	int32_t ret;
 	char c;
+	int d;
 	bool send;
 
 	id = 0;
@@ -192,8 +192,10 @@ static int slcan_command(void)
 		return -1;
 	}
 
-	c = getcSIO2b();
-	switch (c) {
+	d = getcSIO2();
+	if( -1 == d ) return 0;
+	c = 0xff & d;
+	switch (c){
 	case 'T':
 		id = get_nibbles(8);
 		dlc = get_nibbles(1);
@@ -270,23 +272,25 @@ static int slcan_command(void)
 	}
 #endif
 
-	if (commands_pending)
-		commands_pending--;
-
+	if(ret){
+		putcSIO2('\r');
+	} else {
+		putcSIO2('\a');
+	}
 	return ret;
 }
 
 
 int main(void)
 {
-	// SCB_VTOR = 0x20000000;
+	SCB_VTOR = 0x20000000;
 	status = 0;
-	commands_pending = 0;
 
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
 	gpio_setup();
 	systick_setup();
 	init_buzzer();
+
 	int i;
 	for( i = 0 ; i < 10 ; i++){
 		gpio_toggle( GPIOA, GPIO0 );
@@ -295,15 +299,12 @@ int main(void)
 	}
 	init_usart2(921600);
 	can_setup();
+	while( 0 <= getcSIO2()); // clean up buffer
 	/* endless loop */
 	int ct = 0;
 	while (1) {
-		can2_poll();
-		if (slcan_command()) {
-				putcSIO2('\r');
-		} else {
-			 putcSIO2('\a');
-		}
+		can2_poll(); // can fifo -> uart
+		slcan_command(); // uart -> can
 		ct++;
 	}
 	return 0;

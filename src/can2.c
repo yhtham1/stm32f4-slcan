@@ -10,9 +10,10 @@
 
 #include "stm32f4-slcan.h"
 #define lprintf l2printf
-#define TX_BUFF_SIZE_CONST	(16)
-#define RX_BUFF_SIZE_CONST	(16)
+#define TX_BUFF_SIZE_CONST	(256)
+#define RX_BUFF_SIZE_CONST	(256)
 #define CANDEV	CAN2
+#define IRQ_DEV	NVIC_CAN2_RX0_IRQ
 #define USE_ALLOC			(0)		//alloc使用する
 
 #if USE_ALLOC
@@ -31,10 +32,6 @@ static volatile int _TxWp = 0x00;
 static volatile int _TxRp = 0x00;
 static volatile int _RxWp = 0x00;
 static volatile int _RxRp = 0x00;
-
-
-
-
 
 //*********************************** 受信バッファ処理
 static
@@ -93,73 +90,65 @@ static CANMSG _pop_tx( void )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************** 受信ハードウェア部分
-// これを受信割り込みに入れる。
+// CAN2受信割り込み
 
 void can2_rx0_isr(void)
 {
 	CANMSG rx;
 	gpio_set(GPIOA, GPIO0);	//PA0 RX-LED
-	can_receive(CAN2, 0, false, &rx.id, &rx.ext, &rx.rtr, &rx.fmi, &rx.dlc, rx.data, NULL);
+	can_receive(CAN2, 0, false, &rx.id, &rx.ext, &rx.rtr, &rx.fmi, &rx.dlc, rx.data, &rx.timestamp);
 	_push_rx( rx );
-	can_fifo_release(CANDEV, 0);
 	gpio_clear(GPIOA, GPIO0);//PA0 RX-LED
+	can_fifo_release(CANDEV, 0);
 	return;
 }
 
-#if 0
+void debug_error()
+{
+	for(;;);
+}
 
-// これを送信割り込みに入れる。
-static void intr_can_tx( void )
+// CAN2送信割り込み
+void can2_tx_isr( void )
 {
 	CANMSG a;
-	if( CAN_GetITStatus( CANDEV, CAN_IT_TME) == SET ){
+	// if( CAN_GetITStatus( CANDEV, CAN_IT_TME) == SET ){
+	if( CAN_TSR(CANDEV) & (CAN_TSR_RQCP0 | CAN_TSR_RQCP1 | CAN_TSR_RQCP2 )){
 		a = _pop_tx();
 		if( 0xff == a.dlc ){
-			CAN_ITConfig( CANDEV, CAN_IT_TME, DISABLE );
+			can_disable_irq(CANDEV, CAN_IER_TMEIE);
 			return;
 		}
-		CAN_Transmit( CANDEV, &a );
+		can_transmit(CANDEV, a.id, a.ext, a.rtr, a.dlc, a.data );
 	} else {
 		debug_error();
 	}
 }
 
-void hndl_CAN2_RX0( void )
-{
-//	LED10_ON();
-	intr_can_rx();
-//	LED10_OFF();
-}
-void hndl_CAN2_TX( void )
-{
-//	LED11_ON();
-	intr_can_tx();
-//	LED11_OFF();
-}
-
-#endif
 CANMSG getcCAN2( void )
 {
 	return _pop_rx();
 }
 
-#if 0
 
 void putcCAN2( CANMSG c )
 {
+#if 0
 	int ans;
 	ans = _push_tx( c );
-//	if( ans < 0 ){lprintf("putcCAN2() overflow\r\n"); for(;;); }// putcCAN2 error
-	CAN_ITConfig( CANDEV, CAN_IT_TME, ENABLE );	// 送信割込み許可
+	if( ans < 0 ){lprintf("putcCAN2() overflow\r\n"); for(;;); }// putcCAN2 error
+#endif
+	_push_tx( c );
+	can_enable_irq(CAN2, CAN_IER_TMEIE);
+	// CAN_ITConfig( CANDEV, CAN_IT_TME, ENABLE );	// 送信割込み許可
 }
 
-void init_can2_kick()
+void init_can2_kick(void)
 {
 
 }
-#endif
 
-void init_can2_sub()
+static void init_can2_sub(void)
 {
 	_TxWp = 0x00;
 	_TxRp = 0x00;
@@ -184,32 +173,6 @@ void init_can2_sub()
 	// lprintf("\r\nCAN2-TX buffer address :%08x:%d bytes\r\n", _TxBuf, sizeof(CANMSG)*TX_BUFF_SIZE_CONST );
 	// lprintf("CAN2-RX buffer address :%08x:%d bytes\r\n",     _RxBuf, sizeof(CANMSG)*RX_BUFF_SIZE_CONST );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -290,7 +253,7 @@ int can_speed(int index)
 void can_setup(void)
 {
 
-	init_can2_sub(0);
+	init_can2_sub();
 
 
 	rcc_periph_clock_enable(RCC_GPIOB);
@@ -317,9 +280,10 @@ void can_setup(void)
 	can_enable_irq(CAN2, CAN_IER_FMPIE0);
 
 	/* NVIC setup. */
-	nvic_enable_irq(NVIC_CAN2_RX0_IRQ);
-	nvic_set_priority(NVIC_CAN2_RX0_IRQ, 5);
-	nvic_enable_irq(NVIC_USART2_IRQ);
+	nvic_enable_irq(  NVIC_CAN2_RX0_IRQ  );
+	nvic_set_priority(NVIC_CAN2_RX0_IRQ,5);
+	nvic_enable_irq(  NVIC_CAN2_TX_IRQ   );
+	nvic_set_priority(NVIC_CAN2_TX_IRQ, 6);
 
 	uint8_t d[] = {
 		0xde, 0xad, 0xbe, 0xef 

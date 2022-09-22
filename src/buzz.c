@@ -5,23 +5,33 @@
 #include "stm32f4-slcan.h"
 #include "usart.h"
 
-void beep(int freq, int ms)
+#define TIMDEV	(TIM3)
+
+
+void beep1(int freq)
 {
 	int t;
 	if( freq < 120 || 15000 < freq ){
-	    timer_disable_counter( TIM3 );
+	    timer_disable_counter(TIMDEV);
 		return;
 	}
 	t = (7500000/freq)-1;
+	timer_set_period(TIMDEV, t);
+    timer_enable_counter(TIMDEV);
+}
+void beep0(void)
+{
+	timer_disable_counter(TIMDEV);
+}
 
-	timer_set_period(TIM3, t);
-	timer_enable_counter( TIM3 );
-
+void beep(int freq, int ms)
+{
+	beep1(freq);
 	if( 0 == ms ){
 		return;
 	}
 	wait1ms(ms);
-	timer_disable_counter( TIM3 );
+	beep0();
 }
 
 void pipo(void)

@@ -7,8 +7,8 @@
 #include "misc.h"
 
 
-#define TX_BUFF_SIZE_CONST	(8192)
-#define RX_BUFF_SIZE_CONST	(8192)
+#define TX_BUFF_SIZE_CONST	(16384)
+#define RX_BUFF_SIZE_CONST	(16384)
 #define USARTDEV	USART2
 #define RCC_DEV		RCC_USART2
 #define IRQ_DEV		NVIC_USART2_IRQ
@@ -129,10 +129,6 @@ void intr_USART2_tx( void )
 
 void usart2_isr( void )
 {
-	// if( SET == USART_GetITStatus( USARTDEV, USART_IT_LBD )){
-	// 	sig_break = 1;
-	// 	USART_ClearITPendingBit(  USARTDEV, USART_IT_LBD );
-	// }
 	intr_USART2_rx();
 	intr_USART2_tx();
 }
@@ -143,7 +139,7 @@ char getcSIO2b(void)
 {
 	int d;
 	while(-1 == (d = getcSIO2())){
-		can2_poll();
+		// blocking input
 	};
 	return d & 0xff;
 }
@@ -170,7 +166,6 @@ void putsSIO2( char *s )
 		s++;
 	}
 }
-
 
 void init_usart2( uint baudrate )
 {
@@ -209,7 +204,9 @@ void init_usart2( uint baudrate )
     usart_set_parity(USARTDEV, USART_PARITY_NONE);
 	usart_set_flow_control(USARTDEV, USART_FLOWCONTROL_NONE);
 
+	nvic_set_priority(IRQ_DEV, 4);
 	nvic_enable_irq(IRQ_DEV);
+
 	usart_enable_rx_interrupt(USARTDEV);
 //	usart_enable_tx_interrupt(USARTDEV);
 	usart_enable(USARTDEV);
