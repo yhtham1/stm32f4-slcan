@@ -5,14 +5,6 @@
 #include "stm32f4-slcan.h"
 #include "usart.h"
 
-
-
-
-
-
-
-
-
 void beep(int freq, int ms)
 {
 	int t;
@@ -102,17 +94,6 @@ void init_buzzer(void)
 	timer_enable_counter(TIM3);
 	pipo();
 }
-
-static void gpio_setup(void)
-{
-	/* Set GPIOE12 and GPIO13 to 'output push-pull' and AF1 (TIM3_CH3N, TIM3_CH3). */
-	gpio_mode_setup(GPIOE, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO12 | GPIO13);
-	gpio_set_af(GPIOE, GPIO_AF1, GPIO12 | GPIO13);
-	gpio_set_output_options(GPIOE, GPIO_OTYPE_PP, GPIO_OSPEED_100MHZ, GPIO12 | GPIO13);
-}
-
-
-
 
 
 

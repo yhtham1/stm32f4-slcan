@@ -33,6 +33,7 @@ static void gpio_setup(void)
 	gpio_mode_setup(GPIOA,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO0);//PA0 CANRX-LED
 	gpio_mode_setup(GPIOA,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO1);//PA1 CANTX-LED
 	gpio_mode_setup(GPIOA,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO5);//PA5 nucleo LED
+	gpio_mode_setup(GPIOA,GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO6);//PA6 D12-MISO
 	gpio_set( GPIOA, GPIO0 );//PA0 CANRX-LED
 	gpio_set( GPIOA, GPIO1 );//PA1 CANTX-LED
 
@@ -92,15 +93,26 @@ void can2_rx1_isr(void)
 	return;
 }
 
-void can2_rx0_isr(void)
+// void can2_rx0_isr(void);
+void can2_poll(void)
 {
+	CANMSG rx;
 	uint32_t id;
 	bool ext, rtr;
 	uint8_t i, dlc, data[8], fmi;
 	char c;
-	gpio_set(GPIOA, GPIO0);	//PA0 RX-LED
 
-	can_receive(CAN2, 0, false, &id, &ext, &rtr, &fmi, &dlc, data, NULL);
+	rx = getcCAN2();
+	if( rx.dlc == 0xff ) return;
+	id = rx.id;
+	ext = rx.ext;
+	rtr = rx.rtr;
+	fmi = rx.fmi;
+	dlc = rx.dlc;
+	memcpy( data, rx.data, 8 );
+
+
+	// can_receive(CAN2, 0, false, &id, &ext, &rtr, &fmi, &dlc, data, NULL);
 
 	if (rtr) {
 		if (ext)
@@ -138,8 +150,7 @@ void can2_rx0_isr(void)
 		put_hex(data[i]);
 
 	putcSIO2('\r');
-	can_fifo_release(CAN2, 0);
-	gpio_clear(GPIOA, GPIO0);//PA0 RX-LED
+	// can_fifo_release(CAN2, 0);
 
 	/* enable the transmitter now */
 	// USART_CR1(USART2) |= USART_CR1_TXEIE;
@@ -268,7 +279,7 @@ static int slcan_command(void)
 
 int main(void)
 {
-	SCB_VTOR = 0x20000000;
+	// SCB_VTOR = 0x20000000;
 	status = 0;
 	commands_pending = 0;
 
@@ -287,6 +298,7 @@ int main(void)
 	/* endless loop */
 	int ct = 0;
 	while (1) {
+		can2_poll();
 		if (slcan_command()) {
 				putcSIO2('\r');
 		} else {

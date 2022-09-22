@@ -137,10 +137,14 @@ void usart2_isr( void )
 	intr_USART2_tx();
 }
 
+void can2_poll(void);
+
 char getcSIO2b(void)
 {
 	int d;
-	while(-1 == (d = getcSIO2()));
+	while(-1 == (d = getcSIO2())){
+		can2_poll();
+	};
 	return d & 0xff;
 }
 

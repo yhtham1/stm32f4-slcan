@@ -20,6 +20,7 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/usart.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
@@ -44,6 +45,16 @@ struct ring {
     uint32_t end;
 };
 
+typedef struct {
+	uint32_t	id;
+	bool 		ext;
+	bool 		rtr;
+	uint8_t		fmi;
+	uint8_t		dlc;
+	uint8_t		data[8];
+	uint16_t	timestamp;
+} CANMSG;
+
 
 /* can2 */
 void can_setup(void);
@@ -67,11 +78,8 @@ uint8_t hex2bin(char *s);
 void init_buzzer(void);
 void pipo(void);
 void beep(int freq, int ms);
-
-
-
-
-
+int l2printf( char *format, ... );
+CANMSG getcCAN2( void );
 
 
 

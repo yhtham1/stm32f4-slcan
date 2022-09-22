@@ -9,6 +9,209 @@
 
 
 #include "stm32f4-slcan.h"
+#define lprintf l2printf
+#define TX_BUFF_SIZE_CONST	(16)
+#define RX_BUFF_SIZE_CONST	(16)
+#define CANDEV	CAN2
+#define USE_ALLOC			(0)		//alloc使用する
+
+#if USE_ALLOC
+#else
+static CANMSG TX_BUFF_AREA[TX_BUFF_SIZE_CONST];
+static CANMSG RX_BUFF_AREA[RX_BUFF_SIZE_CONST];
+#endif
+
+//****************************************** CAN
+static CANMSG *_TxBuf;
+static CANMSG *_RxBuf;
+static int TX_BUFF_SIZE;
+static int RX_BUFF_SIZE;
+
+static volatile int _TxWp = 0x00;
+static volatile int _TxRp = 0x00;
+static volatile int _RxWp = 0x00;
+static volatile int _RxRp = 0x00;
+
+
+
+
+
+//*********************************** 受信バッファ処理
+static
+int _incp_rx( int p )
+{
+	p++;
+	if( p >= RX_BUFF_SIZE ) p = 0;
+	return p;
+}
+
+static int _push_rx( CANMSG dt )
+{
+	if( _incp_rx( _RxWp ) == _RxRp ) return -1;	// over flow
+	_RxBuf[ _RxWp ] = dt;
+	_RxWp = _incp_rx( _RxWp );
+	return 0;
+}
+
+static CANMSG _pop_rx( void )
+{
+	CANMSG ans;
+	ans.dlc = 0xff; // 無効なデータを知らせる。
+	if( _RxRp == _RxWp ) return ans;				// empty data
+	ans = _RxBuf[ _RxRp ];
+	_RxRp = _incp_rx( _RxRp );
+	return ans;
+}
+//*********************************** 送信バッファ処理
+static int _incp_tx( int p )
+{
+	p++;
+	if( p >= TX_BUFF_SIZE ) p = 0;
+	return p;
+}
+
+static int _push_tx( CANMSG dt )
+{
+	if( _incp_tx( _TxWp ) == _TxRp ) return -1;	// over flow
+	while( _incp_tx( _TxWp ) == _TxRp );
+	_TxBuf[ _TxWp ] = dt;
+	_TxWp = _incp_tx( _TxWp );
+	return 0;
+}
+
+static CANMSG _pop_tx( void )
+{
+	CANMSG ans;
+	ans.dlc = 0xff;
+	if( _TxRp == _TxWp ) return ans;				// empty data
+	ans = _TxBuf[ _TxRp ];
+	_TxRp = _incp_tx( _TxRp );
+	return ans;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//*********************************** 受信ハードウェア部分
+// これを受信割り込みに入れる。
+
+void can2_rx0_isr(void)
+{
+	CANMSG rx;
+	gpio_set(GPIOA, GPIO0);	//PA0 RX-LED
+	can_receive(CAN2, 0, false, &rx.id, &rx.ext, &rx.rtr, &rx.fmi, &rx.dlc, rx.data, NULL);
+	_push_rx( rx );
+	can_fifo_release(CANDEV, 0);
+	gpio_clear(GPIOA, GPIO0);//PA0 RX-LED
+	return;
+}
+
+#if 0
+
+// これを送信割り込みに入れる。
+static void intr_can_tx( void )
+{
+	CANMSG a;
+	if( CAN_GetITStatus( CANDEV, CAN_IT_TME) == SET ){
+		a = _pop_tx();
+		if( 0xff == a.dlc ){
+			CAN_ITConfig( CANDEV, CAN_IT_TME, DISABLE );
+			return;
+		}
+		CAN_Transmit( CANDEV, &a );
+	} else {
+		debug_error();
+	}
+}
+
+void hndl_CAN2_RX0( void )
+{
+//	LED10_ON();
+	intr_can_rx();
+//	LED10_OFF();
+}
+void hndl_CAN2_TX( void )
+{
+//	LED11_ON();
+	intr_can_tx();
+//	LED11_OFF();
+}
+
+#endif
+CANMSG getcCAN2( void )
+{
+	return _pop_rx();
+}
+
+#if 0
+
+void putcCAN2( CANMSG c )
+{
+	int ans;
+	ans = _push_tx( c );
+//	if( ans < 0 ){lprintf("putcCAN2() overflow\r\n"); for(;;); }// putcCAN2 error
+	CAN_ITConfig( CANDEV, CAN_IT_TME, ENABLE );	// 送信割込み許可
+}
+
+void init_can2_kick()
+{
+
+}
+#endif
+
+void init_can2_sub()
+{
+	_TxWp = 0x00;
+	_TxRp = 0x00;
+	_RxWp = 0x00;
+	_RxRp = 0x00;
+
+#if USE_ALLOC
+	void* my_calloc( size_t nums, size_t size );
+	void *my_malloc( size_t size );
+	_TxBuf = (CanTxMsg *)my_calloc(sizeof(CanTxMsg),TX_BUFF_SIZE_CONST);
+	_RxBuf = (CanRxMsg *)my_calloc(sizeof(CanRxMsg),RX_BUFF_SIZE_CONST);
+#else
+	_TxBuf = &TX_BUFF_AREA[0];
+	_RxBuf = &RX_BUFF_AREA[0];
+#endif
+
+	TX_BUFF_SIZE = TX_BUFF_SIZE_CONST;
+	RX_BUFF_SIZE = RX_BUFF_SIZE_CONST;
+
+	if( NULL == _TxBuf ){l2printf("CAN2-TX memory alloc error"); for(;;);}
+	if( NULL == _RxBuf ){l2printf("CAN2-RX memory alloc error"); for(;;);}
+	// lprintf("\r\nCAN2-TX buffer address :%08x:%d bytes\r\n", _TxBuf, sizeof(CANMSG)*TX_BUFF_SIZE_CONST );
+	// lprintf("CAN2-RX buffer address :%08x:%d bytes\r\n",     _RxBuf, sizeof(CANMSG)*RX_BUFF_SIZE_CONST );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int can_speed(int index)
 {
@@ -86,6 +289,10 @@ int can_speed(int index)
 
 void can_setup(void)
 {
+
+	init_can2_sub(0);
+
+
 	rcc_periph_clock_enable(RCC_GPIOB);
 	rcc_periph_clock_enable(RCC_CAN1);
 	can_reset(CAN1);
