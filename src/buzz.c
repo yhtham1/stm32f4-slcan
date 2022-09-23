@@ -3,7 +3,6 @@
  */
 
 #include "stm32f4-slcan.h"
-#include "usart.h"
 
 #define TIMDEV	(TIM3)
 #define RCCDEV	RCC_TIM3

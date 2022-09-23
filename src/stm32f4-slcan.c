@@ -11,7 +11,6 @@
  */
 
 #include "stm32f4-slcan.h"
-#include "usart.h"
 
 
 static void gpio_setup(void)
@@ -247,7 +246,7 @@ static int slcan_command(void)
 		tx.dlc = dlc;
 		memcpy(tx.data, data, 8);
 		putcCAN2(tx);
-		ret = 0; // OK
+		ret = 1; // OK
 
 
 		// ret = can_transmit(CAN2, id, ext, rtr, dlc, data);
@@ -268,9 +267,9 @@ static int slcan_command(void)
 #endif
 
 	if(ret){
-		putcSIO2('\r');//NG
+		putcSIO2('\r');//OK
 	} else {
-		putcSIO2('\a');//OK
+		putcSIO2('\a');//NG
 	}
 	return ret;
 }
@@ -278,7 +277,7 @@ static int slcan_command(void)
 
 int main(void)
 {
-	SCB_VTOR = 0x20000000;//Run from RAM for DEBUG
+	// SCB_VTOR = 0x20000000;//Run from RAM for DEBUG
 
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
 	gpio_setup();

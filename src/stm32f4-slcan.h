@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
+#include "usart_a.h"
 
 #define CAN_MAX_RETRY	10000
 

@@ -204,47 +204,47 @@ int can_speed(int index)
 	 TXFP: Transmit FIFO priority
 	 */
 	switch (index) {
-	case 0:
+	case 0: //10k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 250, false,
 			false);
 		break;
-	case 1:
+	case 1: //20k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 125, false,
 			false);
 		break;
-	case 2:
+	case 2: //50k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 50, false,
 			false);
 		break;
-	case 3:
+	case 3: //100k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 25, false,
 			false);
 		break;
-	case 4:
+	case 4: //125k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 20, false,
 			false);
 		break;
-	case 5:
+	case 5: //250k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 10, false,
 			false);
 		break;
-	case 6:
+	case 6: //500k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 5, false,
 			false);
 		break;
-	case 7:
+	case 7: //800k
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_15TQ, CAN_BTR_TS2_2TQ, 3, false,
 			false);
 		break;
-	case 8:
+	case 8: //1M
 		ret = can_init(CAN2, false, true, false, false, false, false,
 			CAN_BTR_SJW_1TQ, CAN_BTR_TS1_12TQ, CAN_BTR_TS2_2TQ, 3, false,
 			false);

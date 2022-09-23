@@ -1,6 +1,6 @@
 //ＵＴＦ８
-#ifndef _USART_H
-#define _USART_H
+#ifndef _USART_A_H
+#define _USART_A_H
 #include "misc.h"
 
 // intは【32Bit】です。
