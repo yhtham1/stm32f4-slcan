@@ -79,7 +79,6 @@ uint8_t hex2bin(char *s);
 void init_buzzer(void);
 void pipo(void);
 void beep(int freq, int ms);
-int l2printf( char *format, ... );
 CANMSG getcCAN2( void );
 void can2_poll(void);
 void putcCAN2( CANMSG c );
