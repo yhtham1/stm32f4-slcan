@@ -7,8 +7,8 @@
 #include "misc.h"
 
 
-#define TX_BUFF_SIZE_CONST	(16384)
-#define RX_BUFF_SIZE_CONST	(16384)
+#define TX_BUFF_SIZE_CONST	(256)
+#define RX_BUFF_SIZE_CONST	(256)
 #define USARTDEV	USART2
 #define RCC_DEV		RCC_USART2
 #define IRQ_DEV		NVIC_USART2_IRQ

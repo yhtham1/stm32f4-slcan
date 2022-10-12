@@ -59,16 +59,6 @@ int ans;
 void sys_tick_handler(void)
 {
 	system_millis++;
-	volatile int i;
-	i = timer_get_counter(TIM3);
-	i++;
-	ans = i;
-}
-/* sleep for delay milliseconds */
-void wait1ms(uint32_t delay)
-{
-	uint32_t wake = system_millis + delay;
-	while (wake > system_millis);
 }
 
 static void systick_setup(void)
@@ -293,6 +283,9 @@ int main(void)
 {
 	// SCB_VTOR = 0x20000000;//Run from RAM for DEBUG
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
+
+	init_tim5();
+
 	gpio_setup();
 	systick_setup();
 	init_buzzer();
