@@ -20,7 +20,7 @@
 
 
 void init_tim5(void);
-void wait1us(uint32_t us);
+void wait1us(int us);
 void wait1ms(uint32_t ms);
 
 
