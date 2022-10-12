@@ -12,6 +12,19 @@
 
 #include "stm32f4-slcan.h"
 
+// ----------------------------------------
+// --------- printfの置き換え --------------
+// ----------------------------------------
+int _write(int fd, char *ptr, int len)
+{
+	int i = 0;
+	while(len--){
+		putcSIO2(*ptr);
+		ptr++;
+		i++;
+	}
+	return i;
+}
 
 static void gpio_setup(void)
 {
@@ -278,7 +291,6 @@ static int slcan_command(void)
 int main(void)
 {
 	// SCB_VTOR = 0x20000000;//Run from RAM for DEBUG
-
 	rcc_clock_setup_pll(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_180MHZ]);
 	gpio_setup();
 	systick_setup();

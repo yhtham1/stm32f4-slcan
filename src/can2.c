@@ -107,7 +107,7 @@ void can2_rx0_isr(void)
 	return;
 }
 
-void debug_error()
+void debug_error(void)
 {
 	for(;;);
 }
