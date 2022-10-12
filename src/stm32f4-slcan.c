@@ -19,6 +19,7 @@ int _write(int fd, char *ptr, int len)
 {
 	int i = 0;
 	while(len--){
+		if('\n'==*ptr) putcSIO2('\r');
 		putcSIO2(*ptr);
 		ptr++;
 		i++;
