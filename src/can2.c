@@ -10,8 +10,8 @@
 
 #include "stm32f4-slcan.h"
 #define lprintf l2printf
-#define TX_BUFF_SIZE_CONST	(256)
-#define RX_BUFF_SIZE_CONST	(256)
+#define TX_BUFF_SIZE_CONST	(1024)
+#define RX_BUFF_SIZE_CONST	(1024)
 #define CANDEV	CAN2
 #define IRQ_DEV	NVIC_CAN2_RX0_IRQ
 #define USE_ALLOC			(0)		//alloc使用する
